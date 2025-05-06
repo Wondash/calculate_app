@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户信息展示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .user-info {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            width: 300px;
+            margin: 50px auto;
+        }
+        .user-info h2 {
+            margin-bottom: 10px;
+        }
+        .user-info p {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="user-info">
+    <h2>用户信息</h2>
+    <p><strong>用户 ID:</strong> <span th:text="${user.id}"></span></p>
+    <p><strong>用户名:</strong> <span th:text="${user.username}"></span></p>
+    <p><strong>用户邮箱:</strong> <span th:text="${user.email}"></span></p>
+</div>
+</body>
+</html>

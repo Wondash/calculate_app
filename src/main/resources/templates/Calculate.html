@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+  <title>RMI 参数计算</title>
+  <style>
+    /* 移除按钮精准定位 */
+    #removeFileButton {
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 0;
+      line-height: 1;
+      width: 32px;
+      height: 32px;
+    }
+
+    /* 图标显示优化 */
+    .fas.fa-trash {
+      font-size: 14px;
+      margin: auto;
+    }
+
+    /* 输入框高度固定 */
+    input[type="file"] {
+      height: 44px;
+    }
+
+    /* 状态提示样式 */
+    #fileStatus {
+      color: #2ecc71;
+      font-size: 0.9rem;
+    }
+
+    /* 计算中状态样式 */
+    #calculatingStatus {
+      font-size: 0.95rem;
+      color: #6b7280;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    /* 结果区域美化 */
+    #result {
+      font-size: 1.125rem;
+      color: #1a1a1a;
+    }
+
+    #time {
+      color: #4b5563;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+<div class="bg-white p-8 rounded shadow-md w-96">
+  <h1 class="text-2xl font-bold mb-4">RMI 动态参数计算</h1>
+
+  <!-- 方法选择框 -->
+  <div class="mb-4">
+    <label for="method-select" class="block text-sm font-medium text-gray-700">选择计算方法</label>
+    <select id="method-select" class="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+      <option value="">请选择方法</option> <!-- 默认空选项 -->
+    </select>
+  </div>
+
+  <!-- 方法描述和参数 -->
+  <div class="mb-4">
+    <label for="method-description" class="block text-sm font-medium text-gray-700">方法描述</label>
+    <textarea id="method-description" class="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" readonly></textarea>
+  </div>
+  <div class="mb-4">
+    <label for="method-parameters" class="block text-sm font-medium text-gray-700">方法参数</label>
+    <textarea id="method-parameters" class="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" readonly></textarea>
+  </div>
+
+  <!-- 附件上传区域 -->
+  <div class="mb-4 relative">
+    <label class="block text-sm font-medium text-gray-700">上传参数文件（文本格式，每行一个参数）</label>
+    <div class="relative">
+      <input type="file" id="paramFile" accept=".txt" class="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+      <button id="removeFileButton" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-red-500 hover:bg-red-700 text-white font-bold h-8 w-8 rounded-full focus:outline-none hidden">
+        <i class="fas fa-trash text-sm"></i>
+      </button>
+    </div>
+    <div id="fileError" class="text-red-500 text-sm mt-1 hidden">仅支持文本文件，每行一个有效数字</div>
+    <div id="fileStatus" class="text-green-500 text-sm mt-1 hidden">附件已移除</div>
+  </div>
+
+  <!-- 手动输入区域 -->
+  <div id="input-container">
+    <div class="mb-4">
+      <label for="num1" class="block text-sm font-medium text-gray-700">参数 1:</label>
+      <input type="number" id="num1" class="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+    </div>
+  </div>
+
+  <!-- 操作按钮区域 -->
+  <div class="flex space-x-4 mt-4">
+    <button id="addInputButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-1/2">
+      添加输入框
+    </button>
+    <button id="calculateButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-1/2">
+      计算
+    </button>
+  </div>
+
+  <!-- 计算状态提示 -->
+  <div id="calculatingStatus" class="text-center mt-2">
+    计算中... <span id="timer">00:00:00</span>
+  </div>
+
+  <!-- 结果展示 -->
+  <div id="result" class="mt-4 text-lg font-bold text-center"></div>
+  <div id="time" class="mt-2 text-sm text-gray-600 text-center"></div>
+</div>
+
+<script>
+  const methodSelect = document.getElementById('method-select');
+  const methodDescription = document.getElementById('method-description');
+  const methodParameters = document.getElementById('method-parameters');
+  const resultDiv = document.getElementById('result');
+  const timeDiv = document.getElementById('time');
+  let paramFileInput = document.getElementById('paramFile');
+  const fileError = document.getElementById('fileError');
+  const inputContainer = document.getElementById('input-container');
+  const addInputButton = document.getElementById('addInputButton');
+  const removeFileButton = document.getElementById('removeFileButton');
+  const fileStatus = document.getElementById('fileStatus');
+  const calculateButton = document.getElementById('calculateButton');
+  const calculatingStatus = document.getElementById('calculatingStatus');
+
+  let fileParameters = [];
+  let inputCount = 1;
+  let timerInterval;
+  let methodId;
+
+  // 从URL获取用户参数
+  const getUrlParams = () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    return {
+      userId: searchParams.get('userId')
+    };
+  };
+
+  // 动态添加输入框
+  addInputButton.addEventListener('click', () => {
+    inputCount++;
+    const newInputDiv = document.createElement('div');
+    newInputDiv.classList.add('mb-4');
+    newInputDiv.innerHTML = `
+        <label for="num${inputCount}" class="block text-sm font-medium text-gray-700">参数 ${inputCount}:</label>
+        <input type="number" id="num${inputCount}" class="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+      `;
+    inputContainer.appendChild(newInputDiv);
+  });
+
+  // 加载计算方法
+  async function loadMethods() {
+    try {
+      const response = await fetch('/getMethods');
+      const methods = await response.json();
+      methodSelect.innerHTML = '<option value="">请选择方法</option>';
+      methods.forEach(method => {
+        const option = document.createElement('option');
+        option.value = method.name;
+        option.textContent = method.name;
+        methodSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error('加载方法时出错:', error);
+    }
+  }
+
+  // 方法选择变化时加载详情
+  methodSelect.addEventListener('change', async (e) => {
+    const selectedMethod = e.target.value;
+    if (selectedMethod === '') return;
+    try {
+      const response = await fetch(`/getMethodDetails?methodName=${selectedMethod}`);
+      const methodDetails = await response.json();
+      methodId = methodDetails.methodId;
+      methodDescription.value = methodDetails.description || '暂无描述';
+      methodParameters.value = methodDetails.parameters || '暂无参数说明';
+    } catch (error) {
+      console.error('获取方法详情时出错:', error);
+      methodDescription.value = '获取失败';
+      methodParameters.value = '';
+    }
+  });
+
+  // 文件上传处理
+  paramFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      removeFileButton.classList.remove('hidden'); // 显示移除按钮
+    } else {
+      removeFileButton.classList.add('hidden'); // 隐藏移除按钮
+    }
+
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      fileError.classList.add('hidden');
+      fileError.textContent = '';
+      const content = event.target.result;
+
+      try {
+        // 按行分割参数（支持换行或逗号分隔）
+        fileParameters = content.split(/[\n,]+/)
+                .map(p => p.trim())
+                .filter(p => p !== '')
+                .map(p => {
+                  const num = parseFloat(p);
+                  if (isNaN(num)) throw new Error();
+                  return num;
+                });
+      } catch (error) {
+        fileError.classList.remove('hidden');
+        fileError.textContent = '参数文件包含无效数字';
+        fileParameters = [];
+      }
+    };
+
+    reader.readAsText(file);
+  });
+
+  // 移除附件按钮点击事件
+  removeFileButton.addEventListener('click', () => {
+    // 清空文件参数
+    fileParameters = [];
+    // 重置文件输入框（重要：必须创建新输入元素替换，否则无法重置）
+    const newInput = document.createElement('input');
+    Object.assign(newInput, paramFileInput); // 复制原有属性
+    paramFileInput.parentNode.replaceChild(newInput, paramFileInput);
+    paramFileInput = newInput; // 更新引用
+
+    // 显示状态提示
+    fileStatus.classList.remove('hidden');
+    removeFileButton.classList.add('hidden'); // 隐藏按钮
+    setTimeout(() => fileStatus.classList.add('hidden'), 2000); // 2 秒后隐藏提示
+  });
+
+  // 计算按钮点击事件
+  calculateButton.addEventListener('click', async () => {
+    const selectedMethod = methodSelect.value;
+    if (selectedMethod === '') {
+      resultDiv.textContent = '请先选择计算方法';
+      return;
+    }
+
+    let numbers = [];
+    if (fileParameters.length > 0) {
+      numbers = fileParameters;
+    } else {
+      const inputs = document.querySelectorAll('input[type="number"]');
+      inputs.forEach(input => {
+        const value = parseFloat(input.value);
+        if (!isNaN(value)) {
+          numbers.push(value);
+        }
+      });
+    }
+
+    if (numbers.length === 0) {
+      resultDiv.textContent = '请输入参数或上传参数文件';
+      return;
+    }
+
+    // 显示计算中状态
+    calculatingStatus.style.display = 'block';
+    const startTime = performance.now();
+    let elapsedTime = 0;
+
+    // 启动计时器
+    timerInterval = setInterval(() => {
+      elapsedTime = performance.now() - startTime;
+      const seconds = Math.floor(elapsedTime / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      document.getElementById('timer').textContent =
+              `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}:${String(Math.floor(elapsedTime % 1000 / 10)).padStart(2, '0')}`;
+    }, 10);
+
+    const { userId } = getUrlParams();
+    if (!userId) {
+      resultDiv.textContent = 'URL 中缺少用户 ID ';
+      return;
+    }
+
+    try {
+      const response = await fetch('/calculate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId,
+          methodId,
+          method: selectedMethod,
+          numbers
+        })
+      });
+      const endTime = performance.now();
+      const executionTime = endTime - startTime;
+      const data = await response.text();
+
+      // 处理计算结果，避免科学计数法
+      const resultValue = parseFloat(data);
+      const formattedResult = resultValue.toFixed(10).replace(/\.?0+$/, '');
+
+      // 处理计算耗时显示
+      let formattedTime;
+      if (executionTime < 1000) {
+        formattedTime = `${Math.round(executionTime)} 毫秒`;
+      } else {
+        formattedTime = `${(executionTime / 1000).toFixed(2)} 秒`;
+      }
+
+      resultDiv.textContent = `计算结果: ${formattedResult}`;
+      timeDiv.textContent = `计算耗时: ${formattedTime}`;
+    } catch (error) {
+      resultDiv.textContent = '发生错误: ' + error.message;
+    } finally {
+      clearInterval(timerInterval);
+      calculatingStatus.style.display = 'none';
+    }
+  });
+  loadMethods();
+</script>
+</body>
+
+</html>
