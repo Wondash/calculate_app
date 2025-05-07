@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <title>任务列表</title>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+            color: #374151;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* 标题样式 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        /* 返回按钮样式 */
+        .back-button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .back-button:hover {
+            background-color: #2563eb;
+        }
+
+        /* 表格样式 */
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 0.375rem;
+            overflow: hidden;
+        }
+
+        .task-table th,
+        .task-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .task-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        .task-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .task-table tr:hover {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <div class="header">
+        <h1 id="pageTitle">任务列表</h1>
+        <a href="#" class="back-button" id="backButton">返回计算页面</a>
+    </div>
+
+    <table class="task-table">
+        <thead>
+        <tr>
+            <th>任务ID</th>
+            <th>方法名</th>
+            <th>参数</th>
+            <th>完成时间</th>
+            <th>计算结果</th>
+        </tr>
+        </thead>
+        <tbody id="taskListBody"></tbody>
+    </table>
+</div>
+
+<script>
+    const backButton = document.getElementById('backButton');
+    const taskListBody = document.getElementById('taskListBody');
+    const pageTitle = document.getElementById('pageTitle');
+
+    // 从URL获取用户ID和用户名
+    const getUrlParams = () => {
+        const searchParams = new URLSearchParams(window.location.search);
+        return {
+            userId: searchParams.get('userId'),
+            username: searchParams.get('username')
+        };
+    };
+
+    // 返回计算页面并保留参数
+    backButton.addEventListener('click', () => {
+        const { userId, username } = getUrlParams();
+        if (!userId || !username) {
+            alert('用户ID或用户名缺失，无法返回计算页面');
+            return;
+        }
+        window.location.href = `/calculate?userId=${userId}&username=${username}`;
+    });
+
+    // 加载任务列表
+    const loadTasks = async () => {
+        const { userId, username } = getUrlParams();
+        if (!userId) {
+            alert('用户ID缺失，无法加载任务列表');
+            return;
+        }
+
+        // 设置页面标题
+        if (username) {
+            pageTitle.textContent = `${username}的任务列表`;
+        }
+
+        try {
+            const response = await fetch(`/tasks?userId=${userId}`);
+            const tasks = await response.json();
+
+            taskListBody.innerHTML = '';
+
+            for (const task of tasks) {
+                const row = document.createElement('tr');
+
+                // 任务ID
+                const taskId = task.id || '未知';
+
+                // 方法名
+                const methodId = task.method_id;
+                let methodName = '未知方法';
+                if (methodId) {
+                    try {
+                        const methodResponse = await fetch(`/methodName?methodId=${methodId}`);
+                        if (methodResponse.ok) {
+                            methodName = await methodResponse.text();
+                        } else {
+                            const error = await methodResponse.json();
+                            console.error('获取方法名失败:', error);
+                        }
+                    } catch (error) {
+                        console.error('获取方法名出错:', error);
+                    }
+                }
+
+                // 完成时间
+                const completedAt = task.completed_at
+                    ? new Date(task.completed_at).toLocaleString()
+                    : '未知时间';
+
+                row.innerHTML = `
+                        <td>${taskId}</td>
+                        <td>${methodName}</td>
+                        <td>${task.parameters}</td>
+                        <td>${completedAt}</td>
+                        <td>${task.result}</td>
+                    `;
+                taskListBody.appendChild(row);
+            }
+        } catch (error) {
+            console.error('加载任务失败:', error);
+            alert('加载任务列表失败，请重试');
+        }
+    };
+
+    // 初始化加载
+    loadTasks();
+</script>
+</body>
+
+</html>

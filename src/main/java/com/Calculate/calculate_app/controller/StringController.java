@@ -10,7 +10,10 @@ import com.Calculate.calculate_app.service.MethodsService;
 import com.Calculate.calculate_app.service.TasksService;
 import com.Calculate.calculate_app.service.UsersService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.config.Task;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,6 +39,8 @@ public class StringController {
     private UsersService usersService;
     @Autowired
     private TasksService tasksService;
+    @Autowired
+    private MethodsRepository methodsRepository;
 
 //    @PostMapping("/calculate")//计算页面
 //    public String calculate(@RequestBody Map<String, Object> request) {
@@ -148,5 +153,47 @@ public String calculate(@RequestBody Map<String, Object> request) {
             details.put("parameters", method.getParameters());
         }
         return details;
+    }
+    @GetMapping("/task")
+    public ResponseEntity<?> getTasksByUserId(@RequestParam("userId") String userId) {
+        try {
+            int userIdInt = Integer.parseInt(userId);
+
+            List<TasksDTO> taskDTOList = tasksService.getTasksList(userIdInt);
+
+            if (taskDTOList == null) {
+                return ResponseEntity.ok().body(List.of()); // 返回空列表
+            }
+            return ResponseEntity.ok(taskDTOList);
+
+        } catch (NumberFormatException e) {
+            // 处理无效的用户ID（非数字参数）
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("无效的用户ID，必须为整数");
+        }
+
+    }
+    @GetMapping("/tasks")
+    public ResponseEntity<List<TasksDTO>> getTasksByUserId(@RequestParam("userId") Integer userId) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        List<TasksDTO> taskList = tasksService.getTasksList(userId);
+        return ResponseEntity.ok(taskList != null ? taskList : List.of());
+    }
+//    @GetMapping("/methodName")
+//    public ResponseEntity<String> getMethodName(@RequestParam("methodId") int methodId) {
+//        Methods method = methodsRepository.findById(methodId)
+//                .orElse(null);
+//        if (method != null) {
+//            return ResponseEntity.ok(method.getName());
+//        }
+//        return ResponseEntity.notFound().build();
+//    }
+    @GetMapping("/methodName")
+    public ResponseEntity<String> getMethodName(@RequestParam("methodId") int methodId) {
+        return methodsRepository.findById(methodId)
+                .map(method -> ResponseEntity.ok(method.getName()))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 }

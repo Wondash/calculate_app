@@ -108,6 +108,10 @@
     <button id="calculateButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-1/2">
       计算
     </button>
+    <!-- 新增按钮 -->
+    <button id="taskListButton" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-1/2">
+      查看任务列表
+    </button>
   </div>
 
   <!-- 计算状态提示 -->
@@ -140,11 +144,24 @@
   let timerInterval;
   let methodId;
 
+  // 跳转到任务列表
+  const taskListButton = document.getElementById('taskListButton');
+  taskListButton.addEventListener('click', () => {
+    const { userId, username } = getUrlParams();
+
+    if (!userId) {
+      alert('用户 ID 缺失，无法查看任务列表');
+      return;
+    }
+    // 跳转到任务列表页面并传递 userId 和 username
+    window.location.href = `/TaskList.html?userId=${userId}&username=${username}`;
+  });
   // 从URL获取用户参数
   const getUrlParams = () => {
     const searchParams = new URLSearchParams(window.location.search);
     return {
-      userId: searchParams.get('userId')
+      userId: searchParams.get('userId'),
+      username: searchParams.get('username')
     };
   };
 
