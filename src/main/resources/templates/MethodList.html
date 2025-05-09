@@ -63,7 +63,7 @@
         <a href="/logout">退出登录</a>
     </p>
 </div>
-<a th:href="@{/calculate(userId = ${userId}, username = ${username})}" class="top-right-button">前往计算页面</a>
+<a th:href="@{/calculate(userId=${userId}, username=${username})}" class="top-right-button">前往计算页面</a>
 <h1 class="text-3xl font-bold text-center text-gray-800">计算方法列表</h1>
 <table>
     <thead>
@@ -72,6 +72,7 @@
         <th>方法名</th>
         <th>方法描述</th>
         <th>方法参数</th>
+        <th>操作</th> <!-- 新增操作列 -->
     </tr>
     </thead>
     <tbody>
@@ -80,6 +81,13 @@
         <td th:text="${method.name}"></td>
         <td th:text="${method.description}"></td>
         <td th:text="${method.parameters}"></td>
+        <td>
+            <!-- 添加调用方法的链接 -->
+            <a th:href="@{/calculate(userId=${userId}, username=${username}, methodId=${method.id}, methodName=${method.name})}"
+               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm">
+                调用
+            </a>
+        </td>
     </tr>
     </tbody>
 </table>

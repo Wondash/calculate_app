@@ -13,6 +13,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Controller
 public class LogInController {
@@ -43,9 +45,8 @@ public class LogInController {
         Users user = usersService.login(username, password);
         if (user != null) {
             // 登录成功，使用 RedirectAttributes 添加用户 ID 和用户名
-            redirectAttributes.addFlashAttribute("userId", user.getId());
-            redirectAttributes.addFlashAttribute("username", user.getUsername());
-            return "redirect:/MethodList";
+            return "redirect:/MethodList?userId=" + user.getId() +
+                    "&username=" + URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8);
         } else {
             return "redirect:/login?error=true";
         }

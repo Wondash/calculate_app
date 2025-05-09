@@ -26,13 +26,13 @@ public class TasksServiceImpl implements TasksService {
 
 
     @Override
-    public void CreateTask(TasksDTO tasksDTO) {
-//        List<Tasks> taskList = tasksRepository.findByUserIdAndMethodId(tasksDTO.getUser_id(), tasksDTO.getMethod_id());
-//        if(!CollectionUtils.isEmpty(taskList)){
-//            throw new IllegalStateException("重复的提交，请勿重复提交");
-//        }
-//        Tasks tasks = tasksRepository.save(TasksConverter.convertFromDTO(tasksDTO));
-        tasksRepository.save(TasksConverter.convertFromDTO(tasksDTO));
+    public Tasks CreateTask(TasksDTO tasksDTO) {
+        Tasks task = new Tasks();
+        task.setUser_id(tasksDTO.getUser_id());
+        task.setMethod_id(tasksDTO.getMethod_id());
+        task.setParameters(tasksDTO.getParameters());
+        task.setStatus(2); // 初始状态：进行中
+        return tasksRepository.save(task); // 保存后自动生成ID
     }
 
     @Override
@@ -60,9 +60,9 @@ public class TasksServiceImpl implements TasksService {
 
     @Override
     @Transactional
-    public void UpdateTask(TasksDTO tasksDTO) {
-        int id = tasksDTO.getId();
-        Tasks task = tasksRepository.findById(id).orElse(null);
+    public void updateTask(TasksDTO tasksDTO) {
+        Integer id = tasksDTO.getId();
+        Tasks task = tasksRepository.findById(id).orElseThrow(() -> new RuntimeException("Task not found with id: " + id));
         task.setResult(tasksDTO.getResult());
         task.setCompleted_at(tasksDTO.getCompleted_at());
         task.setStatus(tasksDTO.getStatus());

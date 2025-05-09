@@ -7,9 +7,9 @@ import java.util.List;
 
 public interface TasksService {
     //int getTaskId(int user_id, int method_id);
-    void CreateTask(TasksDTO tasksDTO);
+    Tasks CreateTask(TasksDTO tasksDTO);
     void DeleteTaskById(int id);
     String getResultOfTaskById(int id);
     List<TasksDTO> getTasksList(int id);
-    void UpdateTask(TasksDTO tasksDTO);
+    void updateTask(TasksDTO tasksDTO);
 }

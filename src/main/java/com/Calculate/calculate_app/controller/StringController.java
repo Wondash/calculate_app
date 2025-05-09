@@ -1,8 +1,10 @@
 package com.Calculate.calculate_app.controller;
 
 import com.Calculate.calculate_app.converter.DoubleListConverter;
+import com.Calculate.calculate_app.converter.TasksConverter;
 import com.Calculate.calculate_app.dao.Methods;
 import com.Calculate.calculate_app.dao.MethodsRepository;
+import com.Calculate.calculate_app.dao.Tasks;
 import com.Calculate.calculate_app.dao.TasksRepository;
 import com.Calculate.calculate_app.dto.TasksDTO;
 import com.Calculate.calculate_app.dto.UsersDTO;
@@ -81,14 +83,15 @@ public class StringController {
                 taskDTO.setStatus(2);
 //                taskDTO.setResult(Double.toString(result));
 //                taskDTO.setCompleted_at(java.time.LocalDateTime.now());
-                tasksService.CreateTask(taskDTO);
+                TasksDTO newTasksDTO =  TasksConverter.convertToDTO(tasksService.CreateTask(taskDTO));
                 double result = task.call();
 
-                int id = tasksRepository.findByUserIdAndMethodId(userId, methodId).get(0).getId();
-                taskDTO.setStatus(1);
-                taskDTO.setResult(String.valueOf(result));
-                taskDTO.setCompleted_at(LocalDateTime.now());
-                tasksService.UpdateTask(taskDTO);
+                newTasksDTO.setStatus(1);
+                newTasksDTO.setResult(String.valueOf(result));
+                newTasksDTO.setCompleted_at(LocalDateTime.now());
+
+//
+                tasksService.updateTask(newTasksDTO);
 
                 return String.valueOf(result);
             } catch (RemoteException e) {
@@ -151,25 +154,25 @@ public class StringController {
         }
         return details;
     }
-    @GetMapping("/task")
-    public ResponseEntity<?> getTasksByUserId(@RequestParam("userId") String userId) {
-        try {
-            int userIdInt = Integer.parseInt(userId);
-
-            List<TasksDTO> taskDTOList = tasksService.getTasksList(userIdInt);
-
-            if (taskDTOList == null) {
-                return ResponseEntity.ok().body(List.of()); // 返回空列表
-            }
-            return ResponseEntity.ok(taskDTOList);
-
-        } catch (NumberFormatException e) {
-            // 处理无效的用户ID（非数字参数）
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("无效的用户ID，必须为整数");
-        }
-
-    }
+//    @GetMapping("/task")
+//    public ResponseEntity<?> getTasksByUserId(@RequestParam("userId") String userId) {
+//        try {
+//            int userIdInt = Integer.parseInt(userId);
+//
+//            List<TasksDTO> taskDTOList = tasksService.getTasksList(userIdInt);
+//
+//            if (taskDTOList == null) {
+//                return ResponseEntity.ok().body(List.of()); // 返回空列表
+//            }
+//            return ResponseEntity.ok(taskDTOList);
+//
+//        } catch (NumberFormatException e) {
+//            // 处理无效的用户ID（非数字参数）
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                    .body("无效的用户ID，必须为整数");
+//        }
+//
+//    }
 
     @GetMapping("/tasks")
     public ResponseEntity<List<TasksDTO>> getTasksByUserId(@RequestParam("userId") Integer userId) {

@@ -8,6 +8,25 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
   <title>RMI 参数计算</title>
   <style>
+    /* 新增顶部导航样式 */
+    .header-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding: 0 1rem 1rem;
+    }
+
+    .welcome-message {
+      font-size: 1.125rem;
+      color: #1f2937;
+      font-weight: 500;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
     /* 移除按钮精准定位 */
     #removeFileButton {
       right: 12px;
@@ -72,8 +91,22 @@
   </style>
 </head>
 
-<body class="bg-gray-100 flex justify-center items-center h-screen">
-<div class="bg-white p-8 rounded shadow-md w-96">
+<body class="bg-gray-100">
+<div class="header-nav bg-white p-4 shadow-md">
+  <div class="welcome-message">
+    欢迎，<span id="username"></span>
+  </div>
+  <div class="nav-buttons">
+    <a href="/MethodList" id="returnMethodList" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+      返回方法列表
+    </a>
+    <a href="/logout" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+      退出登录
+    </a>
+  </div>
+</div>
+
+<div class="container mx-auto p-8 bg-white rounded shadow-md w-96">
   <h1 class="text-2xl font-bold mb-4">RMI 参数计算</h1>
 
   <!-- 方法选择框 -->
@@ -161,6 +194,7 @@
   const calculatingStatus = document.getElementById('calculatingStatus');
   const timeoutPrompt = document.getElementById('timeoutPrompt');
   const multipleTasksPrompt = document.getElementById('multipleTasksPrompt');
+  const usernameDisplay = document.getElementById('username');
 
   let fileParameters = [];
   let inputCount = 1;
@@ -168,6 +202,26 @@
   let methodId;
   let isCalculating = false; // 新增：标记当前是否正在计算
 
+
+  const returnMethodListBtn = document.getElementById('returnMethodList');
+
+  //返回按钮
+  document.getElementById('returnMethodList').addEventListener('click', (e) => {
+    e.preventDefault();
+    const { userId, username } = getUrlParams();
+    if (!userId || !username) {
+      alert('用户信息缺失');
+      return;
+    }
+    window.location.href = `/MethodList?userId=${encodeURIComponent(userId)}&username=${encodeURIComponent(username)}`;
+  });
+  //显示用户名
+  window.addEventListener('load', () => {
+    const { username } = getUrlParams();
+    if (username) {
+      usernameDisplay.textContent = username;
+    }
+  });
   // 跳转到任务列表
   const taskListButton = document.getElementById('taskListButton');
   taskListButton.addEventListener('click', () => {
