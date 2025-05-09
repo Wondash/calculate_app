@@ -15,7 +15,7 @@ public class RemoteServiceImpl implements RemoteService {
     @Override
 
     public double calculate(String method, List<Double> numbers) throws RemoteException {
-
+        System.out.println("当前线程：" + Thread.currentThread().getName());
         return switch (method) {
             case "加法" -> numbers.stream().mapToDouble(Double::doubleValue).sum();
             case "取平均数" -> numbers.stream().mapToDouble(Double::doubleValue).average().orElse(0);
@@ -34,17 +34,17 @@ public class RemoteServiceImpl implements RemoteService {
         return "Hello from RMI server!";
     }
 
-    // 使用配置好的taskScheduler线程池执行定时任务
-    @Scheduled(fixedRate = 5000, scheduler = "taskScheduler")
-    public void scheduledTask() throws RemoteException{
-//        System.out.println("定时任务执行，当前线程：" + Thread.currentThread().getName());
-        // 可调用其他异步方法或多线程逻辑
-        asyncTask();
-    }
-    @Async
-    public void asyncTask() throws RemoteException{
-//        System.out.println("异步任务执行，当前线程：" + Thread.currentThread().getName());
-    }
+//    // 使用配置好的taskScheduler线程池执行定时任务
+//    @Scheduled(fixedRate = 5000, scheduler = "taskScheduler")
+//    public void scheduledTask() throws RemoteException{
+////        System.out.println("定时任务执行，当前线程：" + Thread.currentThread().getName());
+//        // 可调用其他异步方法或多线程逻辑
+//        asyncTask();
+//    }
+//    @Async
+//    public void asyncTask() throws RemoteException{
+////        System.out.println("异步任务执行，当前线程：" + Thread.currentThread().getName());
+//    }
     //@Async("getAsyncExecutor
     private double test(List<Double> n) throws RemoteException {
         if (n.size() >= 2) {

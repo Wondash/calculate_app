@@ -81,6 +81,40 @@
         .task-table tr:hover {
             background-color: #f9fafb;
         }
+
+        /* 状态标签样式 */
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-completed {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .status-processing {
+            background-color: #e0f2fe;
+            color: #0369a1;
+        }
+
+        /* 删除按钮样式 */
+        .delete-button {
+            background-color: #fef2f2;
+            color: #b91c1c;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .delete-button:hover {
+            background-color: #fee2e2;
+        }
     </style>
 </head>
 
@@ -99,6 +133,8 @@
             <th>参数</th>
             <th>完成时间</th>
             <th>计算结果</th>
+            <th>状态</th>
+            <th>操作</th>
         </tr>
         </thead>
         <tbody id="taskListBody"></tbody>
@@ -128,6 +164,46 @@
         }
         window.location.href = `/calculate?userId=${userId}&username=${username}`;
     });
+
+    // 格式化状态值为文本和样式
+    const formatStatus = (status) => {
+        if (status === 1) {
+            return '<span class="status-badge status-completed">已完成</span>';
+        } else if (status === 2) {
+            return '<span class="status-badge status-processing">进行中</span>';
+        }
+        return '<span class="status-badge">未知</span>';
+    };
+
+    // 删除任务
+    const deleteTask = async (taskId) => {
+        if (!confirm('确定要删除此任务记录吗？')) {
+            return;
+        }
+
+        // const { userId } = getUrlParams();
+        // if (!userId) {
+        //     alert('用户ID缺失，无法删除任务');
+        //     return;
+        // }
+
+        try {
+            const response = await fetch(`/deleteTask?taskId=${taskId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                alert('任务删除成功');
+                loadTasks(); // 刷新任务列表
+            } else {
+                const error = await response.json();
+                alert(`删除失败: ${error.message || '未知错误'}`);
+            }
+        } catch (error) {
+            console.error('删除任务出错:', error);
+            alert('删除任务时发生错误，请重试');
+        }
+    };
 
     // 加载任务列表
     const loadTasks = async () => {
@@ -174,15 +250,24 @@
                 // 完成时间
                 const completedAt = task.completed_at
                     ? new Date(task.completed_at).toLocaleString()
-                    : '未知时间';
+                    : task.status === 2 ? '进行中' : '未知时间';
+
+                // 状态处理
+                const status = task.status !== undefined ? task.status : 0;
 
                 row.innerHTML = `
-                        <td>${taskId}</td>
-                        <td>${methodName}</td>
-                        <td>${task.parameters}</td>
-                        <td>${completedAt}</td>
-                        <td>${task.result}</td>
-                    `;
+                    <td>${taskId}</td>
+                    <td>${methodName}</td>
+                    <td>${task.parameters}</td>
+                    <td>${completedAt}</td>
+                    <td>${task.result}</td>
+                    <td>${formatStatus(status)}</td>
+                    <td>
+                        <button class="delete-button" onclick="deleteTask(${taskId})">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </td>
+                `;
                 taskListBody.appendChild(row);
             }
         } catch (error) {

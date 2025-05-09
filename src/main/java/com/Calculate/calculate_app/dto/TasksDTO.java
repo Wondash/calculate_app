@@ -12,6 +12,14 @@ public class TasksDTO {
     private String parameters;
     private String result;
     private LocalDateTime completed_at;
+    private int status;
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
 
 
 

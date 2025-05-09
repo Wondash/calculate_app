@@ -34,6 +34,6 @@ public interface RemoteService extends Remote {
     double naturalLog(double number)throws RemoteException;
     // 以 10 为底的对数
     double log10(double number)throws RemoteException;
-    public void asyncTask() throws RemoteException;
-    public void scheduledTask() throws RemoteException;
+//    public void asyncTask() throws RemoteException;
+//    public void scheduledTask() throws RemoteException;
 }

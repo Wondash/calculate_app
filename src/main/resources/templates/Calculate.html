@@ -44,22 +44,37 @@
       display: none;
     }
 
-    /* 结果区域美化 */
+    /* 结果展示 */
     #result {
       font-size: 1.125rem;
       color: #1a1a1a;
     }
 
+    /* 计算耗时展示 */
     #time {
       color: #4b5563;
       font-size: 0.875rem;
+    }
+
+    /* 提示信息样式 */
+    #timeoutPrompt {
+      color: red;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    /* 多个任务提示样式 */
+    #multipleTasksPrompt {
+      color: orange;
+      font-size: 0.9rem;
+      display: none;
     }
   </style>
 </head>
 
 <body class="bg-gray-100 flex justify-center items-center h-screen">
 <div class="bg-white p-8 rounded shadow-md w-96">
-  <h1 class="text-2xl font-bold mb-4">RMI 动态参数计算</h1>
+  <h1 class="text-2xl font-bold mb-4">RMI 参数计算</h1>
 
   <!-- 方法选择框 -->
   <div class="mb-4">
@@ -83,7 +98,7 @@
   <div class="mb-4 relative">
     <label class="block text-sm font-medium text-gray-700">上传参数文件（文本格式，每行一个参数）</label>
     <div class="relative">
-      <input type="file" id="paramFile" accept=".txt" class="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+      <input type="file" id="paramFile" accept=".txt" class="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 shadow-sm">
       <button id="removeFileButton" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-red-500 hover:bg-red-700 text-white font-bold h-8 w-8 rounded-full focus:outline-none hidden">
         <i class="fas fa-trash text-sm"></i>
       </button>
@@ -122,6 +137,12 @@
   <!-- 结果展示 -->
   <div id="result" class="mt-4 text-lg font-bold text-center"></div>
   <div id="time" class="mt-2 text-sm text-gray-600 text-center"></div>
+
+  <!-- 超时提示 -->
+  <div id="timeoutPrompt" class="text-center mt-2"></div>
+
+  <!-- 多个任务提示 -->
+  <div id="multipleTasksPrompt" class="text-center mt-2"></div>
 </div>
 
 <script>
@@ -138,11 +159,14 @@
   const fileStatus = document.getElementById('fileStatus');
   const calculateButton = document.getElementById('calculateButton');
   const calculatingStatus = document.getElementById('calculatingStatus');
+  const timeoutPrompt = document.getElementById('timeoutPrompt');
+  const multipleTasksPrompt = document.getElementById('multipleTasksPrompt');
 
   let fileParameters = [];
   let inputCount = 1;
   let timerInterval;
   let methodId;
+  let isCalculating = false; // 新增：标记当前是否正在计算
 
   // 跳转到任务列表
   const taskListButton = document.getElementById('taskListButton');
@@ -156,6 +180,7 @@
     // 跳转到任务列表页面并传递 userId 和 username
     window.location.href = `/TaskList.html?userId=${userId}&username=${username}`;
   });
+
   // 从URL获取用户参数
   const getUrlParams = () => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -266,6 +291,13 @@
 
   // 计算按钮点击事件
   calculateButton.addEventListener('click', async () => {
+    if (isCalculating) {
+      multipleTasksPrompt.textContent = '当前有计算任务正在进行，请等待任务完成。';
+      multipleTasksPrompt.style.display = 'block';
+      return;
+    }
+    isCalculating = true;
+
     const selectedMethod = methodSelect.value;
     if (selectedMethod === '') {
       resultDiv.textContent = '请先选择计算方法';
@@ -303,6 +335,14 @@
       const remainingSeconds = seconds % 60;
       document.getElementById('timer').textContent =
               `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}:${String(Math.floor(elapsedTime % 1000 / 10)).padStart(2, '0')}`;
+
+      if (elapsedTime >= 30000) {
+        clearInterval(timerInterval);
+        calculatingStatus.style.display = 'none';
+        timeoutPrompt.textContent = '计算耗时已超过30秒，请前往任务列表等待计算任务的完成';
+        timeoutPrompt.style.display = 'block';
+        isCalculating = false;
+      }
     }, 10);
 
     const { userId } = getUrlParams();
@@ -347,8 +387,10 @@
     } finally {
       clearInterval(timerInterval);
       calculatingStatus.style.display = 'none';
+      isCalculating = false;
     }
   });
+
   loadMethods();
 </script>
 </body>

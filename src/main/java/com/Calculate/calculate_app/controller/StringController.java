@@ -3,17 +3,17 @@ package com.Calculate.calculate_app.controller;
 import com.Calculate.calculate_app.converter.DoubleListConverter;
 import com.Calculate.calculate_app.dao.Methods;
 import com.Calculate.calculate_app.dao.MethodsRepository;
+import com.Calculate.calculate_app.dao.TasksRepository;
 import com.Calculate.calculate_app.dto.TasksDTO;
 import com.Calculate.calculate_app.dto.UsersDTO;
 import com.Calculate.calculate_app.rmi.common.RemoteService;
+import com.Calculate.calculate_app.rmi.server.CalculationTask;
 import com.Calculate.calculate_app.service.MethodsService;
 import com.Calculate.calculate_app.service.TasksService;
 import com.Calculate.calculate_app.service.UsersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.config.Task;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,8 +24,9 @@ import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
-import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 @RestController
@@ -41,65 +42,54 @@ public class StringController {
     private TasksService tasksService;
     @Autowired
     private MethodsRepository methodsRepository;
+    @Autowired
+    private Executor calculationExecutor;
 
-//    @PostMapping("/calculate")//计算页面
-//    public String calculate(@RequestBody Map<String, Object> request) {
-//        String method = (String) request.get("method");
-//        List<Object> inputNumbers = (List<Object>) request.get("numbers");
-//        List<Double> numbers = new ArrayList<>();
-//        for (Object num : inputNumbers) {
-//            if (num instanceof Integer) {
-//                numbers.add(((Integer) num).doubleValue());
-//            } else if (num instanceof Double) {
-//                numbers.add((Double) num);
-//            } else {
-//                return "输入参数类型错误，必须是数字";
-//            }
-//        }
-//        try {
-//            double result = remoteService.calculate(method, numbers);
-//            return String.valueOf(result);
-//        } catch (RemoteException e) {
-//            return "发生错误: " + e.getMessage();
-//        }
-//    }
-@PostMapping("/calculate")
-public String calculate(@RequestBody Map<String, Object> request) {
-    String userIdStr = (String) request.get("userId");
-    Integer userId = Integer.parseInt(userIdStr);
+    @PostMapping("/calculate")
+    public CompletableFuture<String> calculate(@RequestBody Map<String, Object> request) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                String userIdStr = (String) request.get("userId");
+                Integer userId = Integer.parseInt(userIdStr);
 
-    String methodIdStr = (String) request.get("methodId");
-    Integer methodId = Integer.parseInt(methodIdStr);
+                String methodIdStr = (String) request.get("methodId");
+                Integer methodId = Integer.parseInt(methodIdStr);
 
-    String method = (String) request.get("method");
-    List<Object> inputNumbers = (List<Object>) request.get("numbers");
-    List<Double> numbers = new ArrayList<>();
-    for (Object num : inputNumbers) {
-        if (num instanceof Integer) {
-            numbers.add(((Integer) num).doubleValue());
-        } else if (num instanceof Double) {
-            numbers.add((Double) num);
-        } else {
-            return "输入参数类型错误，必须是数字";
-        }
+                String method = (String) request.get("method");
+                List<Object> inputNumbers = (List<Object>) request.get("numbers");
+                List<Double> numbers = new ArrayList<>();
+                for (Object num : inputNumbers) {
+                    if (num instanceof Integer) {
+                        numbers.add(((Integer) num).doubleValue());
+                    } else if (num instanceof Double) {
+                        numbers.add((Double) num);
+                    } else {
+                        return "输入参数类型错误，必须是数字";
+                    }
+                }
+
+                CalculationTask task = new CalculationTask(remoteService, method, numbers);
+
+
+                TasksDTO taskDTO = new TasksDTO();
+                taskDTO.setUser_id(userId);
+                taskDTO.setMethod_id(methodId);
+                taskDTO.setParameters(DoubleListConverter.convertListToString(numbers));
+                taskDTO.setStatus(2);
+//                taskDTO.setResult(Double.toString(result));
+//                taskDTO.setCompleted_at(java.time.LocalDateTime.now());
+                tasksService.CreateTask(taskDTO);
+                double result = task.call();
+
+
+
+                return String.valueOf(result);
+            } catch (RemoteException e) {
+                return "发生错误: " + e.getMessage();
+            }
+        }, calculationExecutor);
     }
 
-    try {
-        double result = remoteService.calculate(method, numbers);
-
-        TasksDTO task = new TasksDTO();
-        task.setUser_id(userId);
-        task.setMethod_id(methodId);
-        task.setParameters(DoubleListConverter.convertListToString(numbers));
-        task.setResult(Double.toString(result));
-        task.setCompleted_at(java.time.LocalDateTime.now());
-        tasksService.CreateTask(task); // 调用服务层方法
-
-        return String.valueOf(result); // 保留原有结果返回
-    } catch (RemoteException e) {
-        return "发生错误: " + e.getMessage(); // 保留原有错误处理
-    }
-}
     @PostMapping("/register")
     public String addNewUser(@RequestBody UsersDTO usersDTO) {
         if (usersService.addNewUser(usersDTO)) {
@@ -173,6 +163,7 @@ public String calculate(@RequestBody Map<String, Object> request) {
         }
 
     }
+
     @GetMapping("/tasks")
     public ResponseEntity<List<TasksDTO>> getTasksByUserId(@RequestParam("userId") Integer userId) {
         if (userId == null) {
@@ -181,15 +172,19 @@ public String calculate(@RequestBody Map<String, Object> request) {
         List<TasksDTO> taskList = tasksService.getTasksList(userId);
         return ResponseEntity.ok(taskList != null ? taskList : List.of());
     }
-//    @GetMapping("/methodName")
-//    public ResponseEntity<String> getMethodName(@RequestParam("methodId") int methodId) {
-//        Methods method = methodsRepository.findById(methodId)
-//                .orElse(null);
-//        if (method != null) {
-//            return ResponseEntity.ok(method.getName());
-//        }
-//        return ResponseEntity.notFound().build();
-//    }
+
+    @DeleteMapping("/deleteTask")
+    public ResponseEntity<?> deleteTask(@RequestParam("taskId") Integer taskId) {
+        try{
+            tasksService.DeleteTaskById(taskId);
+            return ResponseEntity.ok("删除成功");
+        }catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("删除任务失败");
+        }
+    }
+
     @GetMapping("/methodName")
     public ResponseEntity<String> getMethodName(@RequestParam("methodId") int methodId) {
         return methodsRepository.findById(methodId)

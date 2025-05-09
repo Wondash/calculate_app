@@ -16,6 +16,7 @@ public class TasksConverter {
         tasksDTO.setParameters(tasks.getParameters());
         tasksDTO.setResult(tasks.getResult());
         tasksDTO.setCompleted_at(tasks.getCompleted_at());
+        tasksDTO.setStatus(tasks.getStatus());
         return tasksDTO;
     }
 
@@ -27,6 +28,7 @@ public class TasksConverter {
         tasks.setParameters(tasksDTO.getParameters());
         tasks.setResult(tasksDTO.getResult());
         tasks.setCompleted_at(tasksDTO.getCompleted_at());
+        tasks.setStatus(tasksDTO.getStatus());
         return tasks;
     }
 
