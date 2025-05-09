@@ -24,6 +24,7 @@ import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -44,6 +45,8 @@ public class StringController {
     private MethodsRepository methodsRepository;
     @Autowired
     private Executor calculationExecutor;
+    @Autowired
+    private TasksRepository tasksRepository;
 
     @PostMapping("/calculate")
     public CompletableFuture<String> calculate(@RequestBody Map<String, Object> request) {
@@ -81,7 +84,11 @@ public class StringController {
                 tasksService.CreateTask(taskDTO);
                 double result = task.call();
 
-
+                int id = tasksRepository.findByUserIdAndMethodId(userId, methodId).get(0).getId();
+                taskDTO.setStatus(1);
+                taskDTO.setResult(String.valueOf(result));
+                taskDTO.setCompleted_at(LocalDateTime.now());
+                tasksService.UpdateTask(taskDTO);
 
                 return String.valueOf(result);
             } catch (RemoteException e) {

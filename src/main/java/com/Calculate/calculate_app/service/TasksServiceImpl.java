@@ -4,9 +4,11 @@ package com.Calculate.calculate_app.service;
 import com.Calculate.calculate_app.converter.TasksConverter;
 import com.Calculate.calculate_app.dao.Tasks;
 import com.Calculate.calculate_app.dao.TasksRepository;
+import com.Calculate.calculate_app.dao.UsersRepository;
 import com.Calculate.calculate_app.dto.TasksDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.time.Duration;
@@ -19,7 +21,8 @@ import java.util.List;
 public class TasksServiceImpl implements TasksService {
     @Autowired
     private TasksRepository tasksRepository;
-
+    @Autowired
+    private UsersRepository usersRepository;
 
 
     @Override
@@ -53,6 +56,17 @@ public class TasksServiceImpl implements TasksService {
             return TasksConverter.convertTasksListToDTOList(taskList);
         }
         return null;
+    }
+
+    @Override
+    @Transactional
+    public void UpdateTask(TasksDTO tasksDTO) {
+        int id = tasksDTO.getId();
+        Tasks task = tasksRepository.findById(id).orElse(null);
+        task.setResult(tasksDTO.getResult());
+        task.setCompleted_at(tasksDTO.getCompleted_at());
+        task.setStatus(tasksDTO.getStatus());
+        tasksRepository.save(task);
     }
 
 

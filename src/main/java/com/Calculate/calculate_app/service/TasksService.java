@@ -11,4 +11,5 @@ public interface TasksService {
     void DeleteTaskById(int id);
     String getResultOfTaskById(int id);
     List<TasksDTO> getTasksList(int id);
+    void UpdateTask(TasksDTO tasksDTO);
 }

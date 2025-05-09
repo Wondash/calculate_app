@@ -38,6 +38,12 @@
             color: #1f2937;
         }
 
+        /* 按钮组样式 */
+        .button-group {
+            display: flex;
+            align-items: center;
+        }
+
         /* 返回按钮样式 */
         .back-button {
             background-color: #3b82f6;
@@ -46,10 +52,25 @@
             border-radius: 0.375rem;
             text-decoration: none;
             transition: background-color 0.3s ease;
+            margin-left: 0.5rem;
         }
 
         .back-button:hover {
             background-color: #2563eb;
+        }
+
+        /* 刷新按钮样式 */
+        .refresh-button {
+            background-color: #64748b;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .refresh-button:hover {
+            background-color: #475569;
         }
 
         /* 表格样式 */
@@ -122,7 +143,10 @@
 <div class="container">
     <div class="header">
         <h1 id="pageTitle">任务列表</h1>
-        <a href="#" class="back-button" id="backButton">返回计算页面</a>
+        <div class="button-group">
+            <a href="#" class="refresh-button" onclick="loadTasks()">刷新任务列表</a>
+            <a href="#" class="back-button" id="backButton">返回计算页面</a>
+        </div>
     </div>
 
     <table class="task-table">
@@ -181,14 +205,8 @@
             return;
         }
 
-        const { userId } = getUrlParams();
-        if (!userId) {
-            alert('用户ID缺失，无法删除任务');
-            return;
-        }
-
         try {
-            const response = await fetch(`/deleteTask?taskId=${taskId}&userId=${userId}`, {
+            const response = await fetch(`/deleteTask?taskId=${taskId}`, {
                 method: 'DELETE'
             });
 
@@ -250,24 +268,24 @@
                 // 完成时间
                 const completedAt = task.completed_at
                     ? new Date(task.completed_at).toLocaleString()
-                    : task.status === 2 ? '进行中' : '未知时间';
+                    : task.status === 2? '进行中' : '未知时间';
 
                 // 状态处理
-                const status = task.status !== undefined ? task.status : 0;
+                const status = task.status!== undefined? task.status : 0;
 
                 row.innerHTML = `
-                    <td>${taskId}</td>
-                    <td>${methodName}</td>
-                    <td>${task.parameters}</td>
-                    <td>${completedAt}</td>
-                    <td>${task.result}</td>
-                    <td>${formatStatus(status)}</td>
-                    <td>
-                        <button class="delete-button" onclick="deleteTask(${taskId})">
-                            <i class="fas fa-trash"></i> 删除
-                        </button>
-                    </td>
-                `;
+                        <td>${taskId}</td>
+                        <td>${methodName}</td>
+                        <td>${task.parameters}</td>
+                        <td>${completedAt}</td>
+                        <td>${task.result}</td>
+                        <td>${formatStatus(status)}</td>
+                        <td>
+                            <button class="delete-button" onclick="deleteTask(${taskId})">
+                                <i class="fas fa-trash"></i> 删除
+                            </button>
+                        </td>
+                    `;
                 taskListBody.appendChild(row);
             }
         } catch (error) {
