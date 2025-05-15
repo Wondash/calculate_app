@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>修改用户信息</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f4f4f9;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    .user-container {
+      max-width: 400px;
+      margin: 100px auto;
+      background-color: #fff;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-container h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    .form-item {
+      margin-bottom: 20px;
+    }
+
+    .form-item label {
+      display: block;
+      margin-bottom: 5px;
+      color: #666;
+    }
+
+    .form-item input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+      color: #333;
+      box-sizing: border-box;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .button-group a, .submit-button {
+      padding: 12px 0;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      text-align: center;
+      color: #fff;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .button-group a:hover, .submit-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .button-group a:active, .submit-button:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .back-button {
+      background-color: #6c757d;
+    }
+
+    .back-button:hover {
+      background-color: #5a6268;
+    }
+
+    .submit-button {
+      background-color: #4CAF50;
+    }
+
+    .submit-button:hover {
+      background-color: #45a049;
+    }
+
+    .icon-left {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+<div class="user-container">
+  <h2>修改用户信息</h2>
+
+  <!-- 添加action属性明确表单提交路径 -->
+  <form id="updateUserForm" method="post" th:action="@{/updateUserInfo}">
+    <input type="hidden" id="userId" name="userId" th:value="${user.id}">
+
+    <div class="form-item">
+      <label>用户名</label>
+      <input type="text" id="username" name="username" th:value="${user.username}" placeholder="请输入用户名">
+    </div>
+
+    <div class="form-item">
+      <label>用户邮箱</label>
+      <input type="email" id="email" name="email" th:value="${user.email}" placeholder="请输入邮箱">
+    </div>
+
+    <div class="button-group">
+      <a href="javascript:void(0)" onclick="goBack()" class="back-button">
+        <i class="fas fa-arrow-left icon-left"></i> 返回
+      </a>
+      <button type="submit" class="submit-button">
+        <i class="fas fa-check icon-left"></i> 提交修改
+      </button>
+    </div>
+  </form>
+
+  <!-- 显示消息提示 -->
+  <div id="message" class="mt-4 p-3 rounded" style="display: none;"></div>
+</div>
+
+<script>
+  // 返回按钮逻辑
+  function goBack() {
+    const userId = document.getElementById('userId').value;
+    window.location.href = `/userInfo?userId=${userId}`;
+  }
+
+  // 表单提交逻辑
+  document.getElementById('updateUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const form = this;
+    const userId = document.getElementById('userId').value;
+    const username = document.getElementById('username').value;
+    const email = document.getElementById('email').value;
+
+    // 禁用提交按钮防止重复提交
+    const submitButton = document.querySelector('.submit-button');
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin icon-left"></i> 提交中...';
+
+    // 发送表单数据到后端
+    fetch(form.action, {
+      method: 'POST',
+      body: new FormData(form)
+    })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('提交失败');
+              }
+              return response.text();
+            })
+            .then(data => {
+              // 成功后显示消息并在3秒后跳转
+              const messageDiv = document.getElementById('message');
+              messageDiv.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+              messageDiv.textContent = '修改成功，即将返回...';
+              messageDiv.style.display = 'block';
+
+              setTimeout(() => {
+                window.location.href = `/userInfo?userId=${userId}`;
+              }, 3000);
+            })
+            .catch(error => {
+              // 显示错误消息
+              const messageDiv = document.getElementById('message');
+              messageDiv.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+              messageDiv.textContent = '修改失败：' + error.message;
+              messageDiv.style.display = 'block';
+
+              // 恢复按钮状态
+              submitButton.disabled = false;
+              submitButton.innerHTML = '<i class="fas fa-check icon-left"></i> 提交修改';
+            });
+  });
+</script>
+</body>
+</html>

@@ -49,6 +49,57 @@ public class UsersServiceImpl  implements UsersService {
     }
 
     @Override
+    public Optional<Users> findById(int id) {
+        return usersRepository.findById(id);
+    }
+
+    @Override
+    public void updateUsernameById(int id, String username) {
+        Users usersInDB = usersRepository.findById(id).orElseThrow(()->new IllegalStateException("id:" + id + "不存在"));
+        if(!StringUtils.isEmpty(username) && !usersInDB.getUsername().equals(username)){
+            usersInDB.setUsername(username);
+        }
+        Users users = usersRepository.save(usersInDB);//保存更改
+        UsersConverter.convertUsers(users);
+    }
+
+    @Override
+    public void updatePasswordById(int id, String oldPassword, String newPassword) {
+        Users usersInDB = usersRepository.findById(id).orElseThrow(()->new IllegalStateException("id:" + id + "不存在"));
+        if(!StringUtils.isEmpty(usersInDB.getPassword())&&!oldPassword.equals(usersInDB.getPassword())){
+            usersInDB.setPassword(PasswordEncryptor.encryptPassword(newPassword));
+        }
+        Users users = usersRepository.save(usersInDB);//保存更改
+        UsersConverter.convertUsers(users);
+    }
+
+    @Override
+    public void updateEmailById(int id, String email) {
+        Users usersInDB = usersRepository.findById(id).orElseThrow(()->new IllegalStateException("id:" + id + "不存在"));
+        if(!StringUtils.isEmpty(email) && !usersInDB.getEmail().equals(email)){
+            usersInDB.setEmail(email);
+        }
+        Users users = usersRepository.save(usersInDB);//保存更改
+        UsersConverter.convertUsers(users);
+    }
+
+    @Override
+    public void updateUserNoPasswordById(int id, String username, String email) {
+        Users usersInDB = usersRepository.findById(id).orElseThrow(()->new IllegalStateException("id:" + id + "不存在"));
+
+        //更新用户名
+        if(!StringUtils.isEmpty(username) && !usersInDB.getUsername().equals(username)){
+            usersInDB.setUsername(username);
+        }
+        //更新邮箱
+        if(!StringUtils.isEmpty(email) && !usersInDB.getEmail().equals(email)){
+            usersInDB.setEmail(email);
+        }
+
+        usersRepository.save(usersInDB);//保存更改
+    }
+
+    @Override
     public boolean addNewUser(UsersDTO usersDTO) {
         Optional<Users> usersList = usersRepository.findByUsername(usersDTO.getUsername());
         if(usersList.isPresent()) {
@@ -65,6 +116,7 @@ public class UsersServiceImpl  implements UsersService {
     public void deleteUserById(int id) {
         usersRepository.findById(id).orElseThrow(()->new IllegalStateException("id:" + id + "不存在"));
         usersRepository.deleteById(id);
+
     }
 
     @Override
