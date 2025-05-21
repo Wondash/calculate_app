@@ -16,7 +16,7 @@ public interface UsersService {
     public Users login(String username, String password);
     Optional<Users> findById(int id);
     void updateUsernameById(int id, String username);
-    void updatePasswordById(int id, String oldPassword, String newPassword);
+    boolean updatePasswordById(int id, String oldPassword, String newPassword);
     void updateEmailById(int id, String email);
     void updateUserNoPasswordById(int id, String username, String email);
 }

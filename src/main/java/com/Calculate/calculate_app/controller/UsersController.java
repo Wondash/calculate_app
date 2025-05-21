@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.rmi.RemoteException;
 import java.util.Optional;
 
 @Controller
@@ -72,14 +73,11 @@ public class UsersController {
                                  @RequestParam("oldPassword") String oldPassword,
                                  @RequestParam("newPassword") String newPassword,
                                  RedirectAttributes redirectAttributes) {
-        try {
-            usersService.updatePasswordById(userId, oldPassword, newPassword);
-            redirectAttributes.addFlashAttribute("successMsg", "密码更新成功");
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMsg", "密码更新失败: " + e.getMessage());
-        }
+            if(usersService.updatePasswordById(userId, oldPassword, newPassword)){
+                redirectAttributes.addFlashAttribute("successMsg", "密码更新成功");
+            }else{
+                redirectAttributes.addFlashAttribute("errorMsg", "密码更新失败");
+            }
 
         return "redirect:/userInfo?userId=" + userId;
     }

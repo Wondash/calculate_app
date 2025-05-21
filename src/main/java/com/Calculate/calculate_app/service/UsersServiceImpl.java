@@ -64,13 +64,15 @@ public class UsersServiceImpl  implements UsersService {
     }
 
     @Override
-    public void updatePasswordById(int id, String oldPassword, String newPassword) {
+    public boolean updatePasswordById(int id, String oldPassword, String newPassword) {
         Users usersInDB = usersRepository.findById(id).orElseThrow(()->new IllegalStateException("id:" + id + "不存在"));
         if(!StringUtils.isEmpty(usersInDB.getPassword())&&!oldPassword.equals(usersInDB.getPassword())){
             usersInDB.setPassword(PasswordEncryptor.encryptPassword(newPassword));
+        }else{
+            return false;
         }
-        Users users = usersRepository.save(usersInDB);//保存更改
-        UsersConverter.convertUsers(users);
+        usersRepository.save(usersInDB);//保存更改
+        return true;
     }
 
     @Override

@@ -390,10 +390,10 @@
       document.getElementById('timer').textContent =
               `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}:${String(Math.floor(elapsedTime % 1000 / 10)).padStart(2, '0')}`;
 
-      if (elapsedTime >= 30000) {
+      if (elapsedTime >= 60000) {
         clearInterval(timerInterval);
         calculatingStatus.style.display = 'none';
-        timeoutPrompt.textContent = '计算耗时已超过30秒，请前往任务列表等待计算任务的完成';
+        timeoutPrompt.textContent = '计算耗时已超过一分钟，请前往任务列表等待计算任务的完成';
         timeoutPrompt.style.display = 'block';
         isCalculating = false;
       }
