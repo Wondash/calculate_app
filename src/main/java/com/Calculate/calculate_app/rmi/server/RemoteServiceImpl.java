@@ -15,8 +15,10 @@ public class RemoteServiceImpl implements RemoteService {
     @Override
 
     public double calculate(String method, List<Double> numbers) throws RemoteException {
-        System.out.println("当前线程：" + Thread.currentThread().getName());
-        return switch (method) {
+        long startTime = System.nanoTime(); // 记录开始时间（纳秒）
+        System.out.println("计算中，当前线程：" + Thread.currentThread().getName());
+
+        double result = switch (method) {
             case "加法" -> numbers.stream().mapToDouble(Double::doubleValue).sum();
             case "取平均数" -> numbers.stream().mapToDouble(Double::doubleValue).average().orElse(0);
             case "Fibonacci数列的计算" -> Fibonacci(numbers);
@@ -27,6 +29,15 @@ public class RemoteServiceImpl implements RemoteService {
             case "开方" -> squareRoot(numbers);
             default -> throw new RemoteException("不支持的计算方法: " + method);
         };
+
+        long endTime = System.nanoTime(); // 记录结束时间
+        long duration = endTime - startTime; // 计算耗时（纳秒）
+
+        // 转换为毫秒并输出（保留两位小数）
+        double durationMs = duration / 1_000_000.0;
+        System.out.printf("方法 [%s] 执行时间: %.2f 毫秒%n", method, durationMs);
+
+        return result;
     }
 
     @Override
